@@ -1,12 +1,12 @@
 from south.db import generic
 
-    
+
 class DatabaseOperations(generic.DatabaseOperations):
 
     """
     SQLite3 implementation of database operations.
     """
-    
+
     backend_name = "sqlite3"
 
     # SQLite ignores several constraints. I wish I could.
@@ -83,7 +83,7 @@ class DatabaseOperations(generic.DatabaseOperations):
                 name not in uniques_deleted):
                 type += " UNIQUE"
             if column_info['dflt_value'] is not None:
-                type += " DEFAULT " + column_info['dflt_value']
+                type += " DEFAULT " + str(column_info['dflt_value'])
             # Deal with a rename
             if name in renames:
                 name = renames[name]
@@ -118,7 +118,7 @@ class DatabaseOperations(generic.DatabaseOperations):
         # We can't do that before since it's impossible to rename indexes
         # and index name scope is global
         self._make_multi_indexes(table_name, multi_indexes, renames=renames, deleted=deleted, uniques_deleted=uniques_deleted)
-    
+
     def _copy_data(self, src, dst, field_renames={}, added={}):
         "Used to copy data into a new table"
         # Make a list of all the fields to select
@@ -190,7 +190,7 @@ class DatabaseOperations(generic.DatabaseOperations):
 
             if columns and set(columns) != set(uniques_deleted):
                 self._create_unique(table_name, columns)
-    
+
     def _column_sql_for_create(self, table_name, name, field, explicit_name=True):
         "Given a field and its name, returns the full type for the CREATE TABLE (without unique/pk)"
         field.set_attributes_from_name(name)
@@ -203,7 +203,7 @@ class DatabaseOperations(generic.DatabaseOperations):
         if sql:
             sql = sql.replace("PRIMARY KEY", "")
         return sql
-    
+
     def alter_column(self, table_name, name, field, explicit_name=True, ignore_constraints=False):
         """
         Changes a column's SQL definition.
@@ -217,7 +217,7 @@ class DatabaseOperations(generic.DatabaseOperations):
             params = {
                 "column": self.quote_name(name),
                 "table_name": self.quote_name(table_name)
-            }            
+            }
             self._update_nulls_to_default(params, field)
         # Remake the table correctly
         field._suppress_default = True
@@ -230,25 +230,25 @@ class DatabaseOperations(generic.DatabaseOperations):
         Deletes a column.
         """
         self._remake_table(table_name, deleted=[column_name])
-    
+
     def rename_column(self, table_name, old, new):
         """
         Renames a column from one name to another.
         """
         self._remake_table(table_name, renames={old: new})
-    
+
     def create_unique(self, table_name, columns):
         """
         Create an unique index on columns
         """
         self._create_unique(table_name, columns)
-    
+
     def delete_unique(self, table_name, columns):
         """
         Delete an unique index
         """
         self._remake_table(table_name, uniques_deleted=columns)
-    
+
     def create_primary_key(self, table_name, columns):
         if not isinstance(columns, (list, tuple)):
             columns = [columns]
@@ -259,7 +259,7 @@ class DatabaseOperations(generic.DatabaseOperations):
     def delete_primary_key(self, table_name):
         # By passing True in, we make sure we wipe all existing PKs.
         self._remake_table(table_name, primary_key_override=True)
-    
+
     # No cascades on deletes
     def delete_table(self, table_name, cascade=True):
         generic.DatabaseOperations.delete_table(self, table_name, False)
